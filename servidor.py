@@ -11,15 +11,15 @@ def criar_tabuleiro():
     return [' ' for _ in range(9)]
 
 def imprimir_tabuleiro(tabuleiro, vez):
-    if vez: t = 'T'
-    else: t = 't'
+    if vez: dados_tabuleiro = 'T'
+    else: dados_tabuleiro = 't'
 
     for i in range(9):
-        if tabuleiro[i] == 'X': t += '1'
-        elif tabuleiro[i] == 'O': t += '2'
-        else: t += '0'
+        if tabuleiro[i] == 'X': dados_tabuleiro += '1'
+        elif tabuleiro[i] == 'O': dados_tabuleiro += '2'
+        else: dados_tabuleiro += '0'
 
-    return t
+    return dados_tabuleiro
 
 def verificar_vencedor(tabuleiro):
     combinacoes = [
@@ -78,22 +78,28 @@ def lidar_jogo(jogador1, jogador2):
                     if resultado == simbolo:
                         enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro, False)}")
                         enviar_para_ambos(jogador1, jogador2, f"\n✅ Jogador {simbolo} venceu!\n")
+                        enviar_para_ambos(jogador1, jogador2, f"\n{simbolo}\n")
                         break
+
                     elif resultado == 'empate':
                         enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro, False)}")
                         enviar_para_ambos(jogador1, jogador2, "\n⚪ Empate!\n")
+                        enviar_para_ambos(jogador1, jogador2, "\nE\n")
                         break
+
                     else:
                         turno += 1
                         jogador1.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador1 == jogadores[turno % 2][0])}\n".encode())
                         jogador2.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador2 == jogadores[turno % 2][0])}\n".encode())
                 else:
                     # É uma mensagem comum (chat)
-                    receptor.sendall(f"[Jogador {simbolo}]: {msg}\n".encode())
+                    enviar_para_ambos(jogador1, jogador2, f"[Jogador {simbolo}]: {msg}\n")
             except:
                 break
 
         ativos[0] = False
+        jogador1.sendall("Jogo encerrado. Você saiu.\n".encode())
+        jogador2.sendall("Jogo encerrado. Você saiu.\n".encode())
         remetente.close()
         receptor.close()
 

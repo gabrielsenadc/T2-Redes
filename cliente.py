@@ -1,5 +1,6 @@
 import socket
 import threading
+from time import sleep
 import pygame
 import queue
 
@@ -81,8 +82,26 @@ def desenha_marcadores(janela, jogo):
             elif marcador == '2':
                 desenha_o(janela, linha, coluna)
 
+def desenha_resultado(janela, text):
+    if text == 'X':
+        pygame.font.init() 
+        my_font = pygame.font.SysFont('Comic Sans MS', 50)
+        text_surface = my_font.render('Jogador X venceu!', False, (255, 255, 255))
+        janela.blit(text_surface, ((janela.get_width() - text_surface.get_width())/2, janela.get_height() - 50))
 
-def receber_mensagens(sock, q):
+    elif text == 'O':
+        pygame.font.init() 
+        my_font = pygame.font.SysFont('Comic Sans MS', 50)
+        text_surface = my_font.render('Jogador O venceu!', False, (255, 255, 255))
+        janela.blit(text_surface, ((janela.get_width() - text_surface.get_width())/2, janela.get_height() - 50))
+
+    else:
+        pygame.font.init() 
+        my_font = pygame.font.SysFont('Comic Sans MS', 50)
+        text_surface = my_font.render('Empate!', False, (255, 255, 255))
+        janela.blit(text_surface, ((janela.get_width() - text_surface.get_width())/2, janela.get_height() - 50))
+
+def receber_mensagens(sock, q_jogo, q_chat):
     while True:
         try:
             dados = sock.recv(1024).decode()
@@ -93,8 +112,9 @@ def receber_mensagens(sock, q):
             for msg in msgs:
                 if len(msg) > 0 and (msg[0] == 'T' or msg[0] == 't'):
                     jogo = Jogo(msg)
-                    q.put(jogo)
-                elif len(msg) > 0: print(msg)
+                    q_jogo.put(jogo)
+                elif len(msg) > 0:
+                    q_chat.put(msg)
         except:
             print("Erro ao receber mensagem.")
             break
@@ -105,6 +125,7 @@ def ler_chat(sock):
             entrada = input()
             if entrada.strip() == "":
                 continue
+            print("\033[A\033[2K", end='')
             sock.sendall(entrada.encode())
         except:
             print("Erro ao enviar. Encerrando.")
@@ -121,7 +142,6 @@ def cliente():
     pygame.init()
     pygame.display.init()
 
-
     janela = pygame.display.set_mode((300, 400))
     pygame.display.set_caption("Jogo da velha")
 
@@ -135,10 +155,11 @@ def cliente():
 
     executando = True
 
-    q = queue.Queue()
+    q_jogo = queue.Queue()
+    q_chat = queue.Queue()
 
     # Thread para receber mensagens do server
-    threading.Thread(target=receber_mensagens, args=(sock, q), daemon=True).start()
+    threading.Thread(target=receber_mensagens, args=(sock, q_jogo, q_chat), daemon=True).start()
 
     # Thread para ler mensagens do chat
     threading.Thread(target=ler_chat, args=(sock,), daemon=True).start()
@@ -159,7 +180,21 @@ def cliente():
                 sock.sendall(str(entrada).encode())
 
         try:
-            jogo = q.get(block=False)
+            text = q_chat.get(block=False)
+            if text[0] == 'X' or text[0] == 'O' or text[0] == 'E':
+                desenha_tabuleiro(janela, jogo.vez)
+                desenha_marcadores(janela, jogo.tabuleiro)
+                desenha_resultado(janela, text[0])
+                pygame.display.update()
+                sleep(3)
+                break
+            else:
+                print(f"{text}")
+        except queue.Empty:
+            pass
+
+        try:
+            jogo = q_jogo.get(block=False)
         except queue.Empty:
             continue
 
