@@ -10,8 +10,10 @@ lock = threading.Lock()
 def criar_tabuleiro():
     return [' ' for _ in range(9)]
 
-def imprimir_tabuleiro(tabuleiro):
-    t = 'T'
+def imprimir_tabuleiro(tabuleiro, vez):
+    if vez: t = 'T'
+    else: t = 't'
+
     for i in range(9):
         if tabuleiro[i] == 'X': t += '1'
         elif tabuleiro[i] == 'O': t += '2'
@@ -72,18 +74,19 @@ def lidar_jogo(jogador1, jogador2):
                     tabuleiro[pos] = simbolo
                     resultado = verificar_vencedor(tabuleiro)
 
-                    enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro)}\n")
 
                     if resultado == simbolo:
+                        enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro, False)}")
                         enviar_para_ambos(jogador1, jogador2, f"\n✅ Jogador {simbolo} venceu!\n")
                         break
                     elif resultado == 'empate':
+                        enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro, False)}")
                         enviar_para_ambos(jogador1, jogador2, "\n⚪ Empate!\n")
                         break
                     else:
                         turno += 1
-                        proximo = jogadores[turno % 2][0]
-                        proximo.sendall(f"Sua vez ({jogadores[turno % 2][1]}). Escolha uma posição (0-8): ".encode())
+                        jogador1.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador1 == jogadores[turno % 2][0])}\n".encode())
+                        jogador2.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador2 == jogadores[turno % 2][0])}\n".encode())
                 else:
                     # É uma mensagem comum (chat)
                     receptor.sendall(f"[Jogador {simbolo}]: {msg}\n".encode())
@@ -95,8 +98,8 @@ def lidar_jogo(jogador1, jogador2):
         receptor.close()
 
     # Envia o primeiro tabuleiro e avisa quem começa
-    enviar_para_ambos(jogador1, jogador2, f"{imprimir_tabuleiro(tabuleiro)}\n")
-    jogadores[0][0].sendall(f"Sua vez ({jogadores[0][1]}). Escolha uma posição (0-8): ".encode())
+    jogador1.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador1 == jogadores[0][0])}\n".encode())
+    jogador2.sendall(f"{imprimir_tabuleiro(tabuleiro, jogador2 == jogadores[0][0])}\n".encode())
 
     # Cria threads para escutar mensagens de cada jogador
     threading.Thread(target=escutar_chat, args=(jogador1, jogador2, 'X'), daemon=True).start()
