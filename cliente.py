@@ -16,11 +16,13 @@ class Jogo:
         if dados[0] == 'T': self.vez = True
         else: self.vez = False
 
-    def get_tabuleiro(self):
-        return self.tabuleiro
-    
-    def get_vez(self):
-        return self.vez
+    def atualiza(self, dados):
+        self.tabuleiro = [[dados[1], dados[2], dados[3]],
+                          [dados[4], dados[5], dados[6]],
+                          [dados[7], dados[8], dados[9]]]
+        
+        if dados[0] == 'T': self.vez = True
+        else: self.vez = False
         
 
 
@@ -101,7 +103,7 @@ def desenha_resultado(janela, text):
         text_surface = my_font.render('Empate!', False, (255, 255, 255))
         janela.blit(text_surface, ((janela.get_width() - text_surface.get_width())/2, janela.get_height() - 50))
 
-def receber_mensagens(sock, q_jogo, q_chat):
+def receber_mensagens(sock, q):
     while True:
         try:
             dados = sock.recv(1024).decode()
@@ -110,11 +112,8 @@ def receber_mensagens(sock, q_jogo, q_chat):
                 break
             msgs = dados.split('\n')
             for msg in msgs:
-                if len(msg) > 0 and (msg[0] == 'T' or msg[0] == 't'):
-                    jogo = Jogo(msg)
-                    q_jogo.put(jogo)
-                elif len(msg) > 0:
-                    q_chat.put(msg)
+                if len(msg) > 0:
+                    q.put(msg)
         except:
             print("Erro ao receber mensagem.")
             break
@@ -145,21 +144,18 @@ def cliente():
     janela = pygame.display.set_mode((300, 400))
     pygame.display.set_caption("Jogo da velha")
 
-    jogo = [['0', '0', '0'],
-            ['0', '0', '0'],
-            ['0', '0', '0']]
+    jogo = Jogo('t000000000')
     
-    desenha_tabuleiro(janela, False)
-    desenha_marcadores(janela, jogo)
+    desenha_tabuleiro(janela, jogo.vez)
+    desenha_marcadores(janela, jogo.tabuleiro)
     pygame.display.update()
 
     executando = True
 
-    q_jogo = queue.Queue()
-    q_chat = queue.Queue()
+    q = queue.Queue()
 
     # Thread para receber mensagens do server
-    threading.Thread(target=receber_mensagens, args=(sock, q_jogo, q_chat), daemon=True).start()
+    threading.Thread(target=receber_mensagens, args=(sock, q), daemon=True).start()
 
     # Thread para ler mensagens do chat
     threading.Thread(target=ler_chat, args=(sock,), daemon=True).start()
@@ -180,8 +176,10 @@ def cliente():
                 sock.sendall(str(entrada).encode())
 
         try:
-            text = q_chat.get(block=False)
-            if text[0] == 'X' or text[0] == 'O' or text[0] == 'E':
+            text = q.get(block=False)
+            if text[0] == 'T' or text[0] == 't':
+                jogo.atualiza(text)
+            elif text[0] == 'X' or text[0] == 'O' or text[0] == 'E':
                 desenha_tabuleiro(janela, jogo.vez)
                 desenha_marcadores(janela, jogo.tabuleiro)
                 desenha_resultado(janela, text[0])
@@ -190,13 +188,10 @@ def cliente():
                 break
             else:
                 print(f"{text}")
-        except queue.Empty:
-            pass
-
-        try:
-            jogo = q_jogo.get(block=False)
+                continue
         except queue.Empty:
             continue
+
 
         desenha_tabuleiro(janela, jogo.vez)
         desenha_marcadores(janela, jogo.tabuleiro)
