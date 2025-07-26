@@ -166,27 +166,32 @@ def cliente():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 executando = False
+                print("Jogo encerrado. Você saiu.")
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
 
                 linha = pos[1] // 100
                 coluna = pos[0] // 100
 
-                entrada = linha * 3 + coluna
-                sock.sendall(str(entrada).encode())
+                if linha < 3 and coluna < 3:
+                    entrada = linha * 3 + coluna
+                    sock.sendall(str(entrada).encode())
 
         try:
             text = q.get(block=False)
-            if text[0] == 'T' or text[0] == 't':
+            if text[0] == 'T' or text[0] == 't': # Tabuleiro novo
                 jogo.atualiza(text)
-            elif text[0] == 'X' or text[0] == 'O' or text[0] == 'E':
+            elif text[0] == 'X' or text[0] == 'O' or text[0] == 'E': # Jogo finalizou normalmente
                 desenha_tabuleiro(janela, jogo.vez)
                 desenha_marcadores(janela, jogo.tabuleiro)
                 desenha_resultado(janela, text[0])
                 pygame.display.update()
                 sleep(3)
                 break
-            else:
+            elif text[0] == 'J': # Algum jogador saiu da partida
+                print(text)
+                break
+            else: # Mensagem normal
                 print(f"{text}")
                 continue
         except queue.Empty:
@@ -198,8 +203,7 @@ def cliente():
         pygame.display.update()
         
 
-    pygame.quit()
-
+    pygame.quit()    
     sock.close()
 
 if __name__ == "__main__":

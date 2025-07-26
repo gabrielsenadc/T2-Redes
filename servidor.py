@@ -98,8 +98,17 @@ def lidar_jogo(jogador1, jogador2):
                 break
 
         ativos[0] = False
-        jogador1.sendall("Jogo encerrado. Você saiu.\n".encode())
-        jogador2.sendall("Jogo encerrado. Você saiu.\n".encode())
+
+        try:
+            jogador1.sendall("Jogo encerrado. Oponente saiu da partida.\n".encode())
+        except:
+            pass #jogador1 já fechou conexão
+
+        try:
+            jogador2.sendall("Jogo encerrado. Oponente saiu da partida.\n".encode())
+        except:
+            pass #jogador2 já fechou conexão
+
         remetente.close()
         receptor.close()
 
