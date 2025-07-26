@@ -38,14 +38,29 @@ def enviar_para_ambos(j1, j2, msg):
     j1.sendall(msg.encode())
     j2.sendall(msg.encode())
 
+def finalizar(jogador1, jogador2):
+    try:
+        jogador1.sendall("\nJogo encerrado. Oponente saiu da partida.\n".encode())
+    except:
+        pass #jogador1 já fechou conexão
+
+    try:
+        jogador2.sendall("\nJogo encerrado. Oponente saiu da partida.\n".encode())
+    except:
+        pass #jogador2 já fechou conexão
+
 def lidar_jogo(jogador1, jogador2):
     tabuleiro = criar_tabuleiro()
     jogadores = [(jogador1, 'X'), (jogador2, 'O')]
     turno = 0
     ativos = [True]  # usada como flag para encerrar as threads de escuta
 
-    enviar_para_ambos(jogador1, jogador2, "\n--- Jogo da Velha Iniciado ---\n")
-    enviar_para_ambos(jogador1, jogador2, "Chat ativado. Você pode enviar mensagens a qualquer momento.\n")
+    try:
+        enviar_para_ambos(jogador1, jogador2, "\n--- Jogo da Velha Iniciado ---\n")
+        enviar_para_ambos(jogador1, jogador2, "Chat ativado. Você pode enviar mensagens a qualquer momento.\n")
+    except:
+        finalizar(jogador1, jogador2) # Caso algum dos jogadores tenha saído
+        return
 
     def escutar_chat(remetente, receptor, simbolo):
         # Thread que escuta mensagens do jogador e as redireciona como chat ou jogada
@@ -99,15 +114,7 @@ def lidar_jogo(jogador1, jogador2):
 
         ativos[0] = False
 
-        try:
-            jogador1.sendall("Jogo encerrado. Oponente saiu da partida.\n".encode())
-        except:
-            pass #jogador1 já fechou conexão
-
-        try:
-            jogador2.sendall("Jogo encerrado. Oponente saiu da partida.\n".encode())
-        except:
-            pass #jogador2 já fechou conexão
+        finalizar(jogador1, jogador2)
 
         remetente.close()
         receptor.close()
@@ -127,6 +134,7 @@ def lidar_com_cliente(cliente):
         if len(fila_espera) >= 2:
             j1 = fila_espera.pop(0)
             j2 = fila_espera.pop(0)
+            
             threading.Thread(target=lidar_jogo, args=(j1, j2), daemon=True).start()
 
 def iniciar_servidor():
