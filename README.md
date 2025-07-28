@@ -1,8 +1,11 @@
 # Trabalho 2 de Redes de Computadores
 # Jogo da Velha
-Eduardo Silava Guimarães e Gabriel Sena da Cunha
+Eduardo Silva Guimarães e Gabriel Sena da Cunha
 
 ## Descrição
+O código é uma simples implementação de um jogo da velha com uma interface visual e que é capaz de ser executado entre diferentes dispositivos conectados à mesma rede. O jogo funciona através de um terminal que também possibilita conversas em um chat habilitado no mesmo terminal.
+
+Esse projeto foi desenvolvido como parte da avaliação da disciplina de Redes de Computadores e tem como objetivo a familiarização com o uso de sockets para gerar uma comunicação entre dispositivos através de uma rede.
 
 ## Tecnologias Utilizadas
 Python, Pygame, Socket, Threading
@@ -14,10 +17,20 @@ Python, Pygame, Socket, Threading
 1- Clone o repositório:
 git clone https://github.com/gabrielsenadc/T2-Redes.git
 
-2- Instale as dependências:
+2- Instale a dependência:
+~~~
 pip install pygame
+~~~
 
-3- Execute o servidor: python servidor.py ou python3 servidor.py
+3- Execute o servidor: 
+~~~
+python3 servidor.py
+~~~
+
+4- Cada jogador, em uma mesma rede, executa o cliente:
+~~~
+python3 cliente.py
+~~~
 
 ## Como Testar
 Com um terminal já executando servidor.py, abra mais um número par de terminais e execute o código do cliente (python cliente.py ou python3 cliente.py) em cada um deles. 
@@ -39,5 +52,4 @@ Cada par será redirecionado para uma sala e um jogo próprio começará. Os seg
 - Login de jogadores
 - Convite por token
 - Criptografia no chat
-
-
+- Sessões privadas
